@@ -1,0 +1,12 @@
+.action-cell .delete-button {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.MuiDataGrid-row:hover .delete-button {
+  opacity: 1;
+}
+
+.hidden-delete {
+  display: none !important;
+}
