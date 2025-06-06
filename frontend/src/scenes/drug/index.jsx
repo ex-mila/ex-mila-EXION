@@ -13,7 +13,6 @@ import CustomToolbar from "../global/CustomToolbar"
 // UPDATE 2: filtering functionality (pro version) => (replacement) own custom toolbar with basic buttons
 // Export CSV (json2csv), Print(window.print() or html2canvas), Show/hide Columns ... 
 
-
 const DrugList = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);

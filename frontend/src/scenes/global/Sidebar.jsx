@@ -1,35 +1,31 @@
-import { useState } from "react";
-import { ProSidebar, Menu, MenuItem } from "react-pro-sidebar";
-import { Box, IconButton, Typography, useTheme } from "@mui/material";
-import { Link } from "react-router-dom";
-import "react-pro-sidebar/dist/css/styles.css";
-import { tokens } from "../../theme";
-import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
-import PeopleOutlinedIcon from "@mui/icons-material/PeopleOutlined";
-import ContactsOutlinedIcon from "@mui/icons-material/ContactsOutlined";
-import ReceiptOutlinedIcon from "@mui/icons-material/ReceiptOutlined";
-import PersonOutlinedIcon from "@mui/icons-material/PersonOutlined";
-import CalendarTodayOutlinedIcon from "@mui/icons-material/CalendarTodayOutlined";
-import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
-import BarChartOutlinedIcon from "@mui/icons-material/BarChartOutlined";
-import PieChartOutlineOutlinedIcon from "@mui/icons-material/PieChartOutlineOutlined";
-import TimelineOutlinedIcon from "@mui/icons-material/TimelineOutlined";
-import MenuOutlinedIcon from "@mui/icons-material/MenuOutlined";
-import MapOutlinedIcon from "@mui/icons-material/MapOutlined";
+import { useState } from 'react';
+import { ProSidebar, Menu, MenuItem } from 'react-pro-sidebar';
+import { Box, IconButton, Typography, useTheme, Paper } from '@mui/material';
+import { Link } from 'react-router-dom';
+import 'react-pro-sidebar/dist/css/styles.css';
+import { tokens } from '../../theme';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
+import ContactsOutlinedIcon from '@mui/icons-material/ContactsOutlined';
+import ReceiptOutlinedIcon from '@mui/icons-material/ReceiptOutlined';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
+import CalendarTodayOutlinedIcon from '@mui/icons-material/CalendarTodayOutlined';
+import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import PieChartOutlineOutlinedIcon from '@mui/icons-material/PieChartOutlineOutlined';
+import TimelineOutlinedIcon from '@mui/icons-material/TimelineOutlined';
+import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
+import DriveFolderUploadIcon from '@mui/icons-material/DriveFolderUpload';
 
 const Item = ({ title, to, icon, selected, setSelected }) => {
-  const theme = useTheme();
-  const colors = tokens(theme.palette.mode);
   return (
     <MenuItem
       active={selected === title}
-      style={{
-        color: colors.grey[100],
-      }}
+      style={{ color: '#004d40' }}
       onClick={() => setSelected(title)}
       icon={icon}
     >
-      <Typography>{title}</Typography>
+      <Typography fontWeight="bold">{title}</Typography>
       <Link to={to} />
     </MenuItem>
   );
@@ -39,48 +35,62 @@ const Sidebar = () => {
   const theme = useTheme();
   const colors = tokens(theme.palette.mode);
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [selected, setSelected] = useState("Dashboard");
+  const [selected, setSelected] = useState('Dashboard');
 
   return (
     <Box
       sx={{
-        "& .pro-sidebar-inner": {
-          background: `${colors.primary[400]} !important`,
+        '& .pro-sidebar-inner': {
+          background: 'rgba(255, 255, 255, 0.12)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderRight: '1px solid rgba(255,255,255,0.3)',
         },
-        "& .pro-icon-wrapper": {
-          backgroundColor: "transparent !important",
+        '& .pro-icon-wrapper': {
+          backgroundColor: 'transparent !important',
         },
-        "& .pro-inner-item": {
-          padding: "5px 35px 5px 20px !important",
+        '& .pro-inner-item': {
+          padding: '6px 25px 6px 16px !important',
         },
-        "& .pro-inner-item:hover": {
-          color: "#868dfb !important",
+        '& .pro-inner-item:hover': {
+          color: '#00b8a9 !important',
+          backgroundColor: 'rgba(0, 184, 169, 0.1) !important',
+          borderRadius: '8px',
         },
-        "& .pro-menu-item.active": {
-          color: "#6870fa !important",
+        '& .pro-menu-item.active': {
+          color: '#00b8a9 !important',
+          backgroundColor: 'rgba(0, 184, 169, 0.15) !important',
+          borderRadius: '8px',
+        },
+        '& .pro-menu': {
+          paddingBottom: '1rem',
+        },
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          background: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: '#00b8a9',
+          borderRadius: '8px',
         },
       }}
     >
-      <ProSidebar collapsed={isCollapsed}>
+      <ProSidebar collapsed={isCollapsed} breakPoint="md">
         <Menu iconShape="square">
-          {/* LOGO AND MENU ICON */}
           <MenuItem
             onClick={() => setIsCollapsed(!isCollapsed)}
-            icon={isCollapsed ? <MenuOutlinedIcon /> : undefined}
+            icon={<MenuOutlinedIcon />}
             style={{
-              margin: "10px 0 20px 0",
-              color: colors.grey[100],
+              margin: '10px 0 20px 0',
+              color: '#004d40',
             }}
           >
             {!isCollapsed && (
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                ml="15px"
-              >
-                <Typography variant="h3" color={colors.grey[100]}>
-                  ADMINIS
+              <Box display="flex" justifyContent="space-between" alignItems="center" ml="15px">
+                <Typography variant="h3" fontWeight="bold" color="#004d40">
+                  EXIONLabs
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon />
@@ -94,29 +104,24 @@ const Sidebar = () => {
               <Box display="flex" justifyContent="center" alignItems="center">
                 <img
                   alt="profile-user"
-                  width="100px"
-                  height="100px"
-                  src={`../../assets/user.png`}
-                  style={{ cursor: "pointer", borderRadius: "50%" }}
+                  width="90px"
+                  height="90px"
+                  src={`../../assets/pharmacist1.png`}
+                  style={{ cursor: 'pointer', borderRadius: '50%' }}
                 />
               </Box>
               <Box textAlign="center">
-                <Typography
-                  variant="h2"
-                  color={colors.grey[100]}
-                  fontWeight="bold"
-                  sx={{ m: "10px 0 0 0" }}
-                >
-                  맹구
+                <Typography variant="h4" fontWeight="bold" color="#004d40" sx={{ m: '10px 0 0 0' }}>
+                  Branden S.
                 </Typography>
-                <Typography variant="h5" color={colors.greenAccent[500]}>
-                  EXION Admin
+                <Typography variant="body1" color={colors.greenAccent[500]}>
+                  Multipharma
                 </Typography>
               </Box>
             </Box>
           )}
 
-          <Box paddingLeft={isCollapsed ? undefined : "10%"}>
+          <Box paddingLeft={isCollapsed ? undefined : '10%'}>
             <Item
               title="Dashboard"
               to="/"
@@ -124,23 +129,16 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+            <Typography variant="h6" color={colors.grey[600]} sx={{ m: '20px 0 8px 20px' }}>
               Drug
             </Typography>
-            {/* Drug Registeration */}
             <Item
-              title="Import" // New Drug Entry, Drug List Sync, Drug import
+              title="Import"
               to="/upload"
-              icon={<PeopleOutlinedIcon />}
+              icon={<DriveFolderUploadIcon />}
               selected={selected}
               setSelected={setSelected}
             />
-            {/* Drug Listing */}
             <Item
               title="List"
               to="/drugs"
@@ -148,20 +146,15 @@ const Sidebar = () => {
               selected={selected}
               setSelected={setSelected}
             />
-            {/* Drug Inventory */}
             <Item
-              title="Inventory"
-              to="/invoices"
+              title="Reports"
+              to="/reports"
               icon={<ReceiptOutlinedIcon />}
               selected={selected}
               setSelected={setSelected}
             />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
+            <Typography variant="h6" color={colors.grey[600]} sx={{ m: '20px 0 8px 20px' }}>
               Pages
             </Typography>
             <Item
@@ -186,12 +179,8 @@ const Sidebar = () => {
               setSelected={setSelected}
             />
 
-            <Typography
-              variant="h6"
-              color={colors.grey[300]}
-              sx={{ m: "15px 0 5px 20px" }}
-            >
-              Charts
+            <Typography variant="h6" color={colors.grey[600]} sx={{ m: '20px 0 8px 20px' }}>
+              Analytics
             </Typography>
             <Item
               title="Bar Chart"

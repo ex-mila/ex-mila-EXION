@@ -33,3 +33,22 @@ body,
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.new-row {
+  background-color: #e0f8f6;
+  animation: highlightFade 4s ease forwards;
+}
+
+@keyframes highlightFade {
+  0% {
+    background-color: #b2ebe6;
+  }
+  100% {
+    background-color: transparent;
+  }
+}

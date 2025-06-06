@@ -31,11 +31,11 @@ merged = pd.merge(
 
 # 병합된 테이블에서 필요 필드만 추출
 final = merged[[
-    "drug_name",            # 약품명
+    "drug_name",            
     "standard_code_x",      # 표준코드 (이름 충돌 시)
-    "product_standard_code",# 제품코드
-    "business_name",        # 제조사
-    "image_url"             # 이미지
+    "product_standard_code",
+    "business_name",        
+    "image_url"            
 ]]
 final.columns = ["drug_name", "standard_code", "product_code", "manufacturer", "image_url"]
 
