@@ -1,4 +1,12 @@
-import "../../styles/deleteButton.css" // 삭제 버튼용 스타일
+/**
+ * Upload.jsx
+ * 
+ * This component provides a full-featured interface for uploading drug order lists (Excel or PDF),
+ * automatically matching them with EXION's up-to-date drug database,
+ * allowing in-browser editing, and exporting or saving the results.
+ */
+
+import "../../styles/deleteButton.css"
 import Tooltip from "@mui/material/Tooltip";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,38 +28,57 @@ import {
   Chip
 } from "@mui/material";
 import { utils, writeFile } from "xlsx";
+import { styled } from "@mui/material/styles";
 import CloseIcon from "@mui/icons-material/Close";
 import SaveIcon from "@mui/icons-material/Save";
 import DeleteIcon from "@mui/icons-material/Delete";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import font from "../../fonts/NotoSansKR-normal"
+
+// 폰트 설정
+jsPDF.API.events.push([
+  "addFonts",
+  function () {
+    this.addFileToVFS("NotoSansKR-Regular.ttf", font);
+    this.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
+  },
+]);
+
+const doc = new jsPDF();
+doc.setFont("NotoSansKR");
+doc.text("테스트 약품명: 아세트아미노펜 정 500mg", 20, 20);
 
 const Upload = () => {
 
   const navigate = useNavigate();
   
   // 상태 정의
-  const [file, setFile] = useState(null); // 업로드 파일
+  const [file, setFile] = useState(null); 
   const [rows, setRows] = useState([]); // 테이블 데이터
   const [originalRows, setOriginalRows] = useState([]); // 원본 데이터
 
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all"); // 필터(전체/성공/실패)
 
-  const [searchText, setSearchText] = useState(""); // 약품명 검색 필드
+  const [searchText, setSearchText] = useState(""); 
   const [editBuffer, setEditBuffer] = useState({}); // 수정된 row 로컬 저장
   const [editedRows, setEditedRows] = useState({}); // 수정된 row ID 추적
-  const [confirmOpen, setConfirmOpen] = useState(false); // 최종 승인 dialog
-  const [previewData, setPreviewData] = useState([]); // dialog 표시 데이터
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [previewData, setPreviewData] = useState([]); 
 
 
-  const [openImage, setOpenImage] = useState(false); // 이미지 모달
-  const [selectedImage, setSelectedImage] = useState(""); // 선택된 image url
+  const [openImage, setOpenImage] = useState(false); 
+  const [selectedImage, setSelectedImage] = useState(""); 
 
-  const [open, setOpen] = useState(false); // 스낵바 상태
-  const [alertMessage, setAlertMessage] = useState(""); // 스낵바 메세지
-  const [alertSeverity, setAlertSeverity] = useState("success"); // 스낵바 종류
+  const [open, setOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState(""); 
+  const [alertSeverity, setAlertSeverity] = useState("success");
 
-  const [approvalNote, setApprovalNote] = useState(""); // 승인 메모
-  const [postApprovalMessage, setPostApprovalMessage] = useState(""); // 승인 메세지
+  const [approvalNote, setApprovalNote] = useState("");
+  const [postApprovalMessage, setPostApprovalMessage] = useState("");
   const [showAllRowsInDialog, setShowAllRowsInDialog] = useState(true); // dialog 전체/수정 전환
 
   // 수정됨 표시 스타일
@@ -66,16 +93,14 @@ const Upload = () => {
     display: "inline-block",
   };
 
-
-  // 테이블 컬럼 정의의
+  // 테이블 컬럼 정의
   const columns = [
-    { field: "id", headerName: "ID", flex: 0.3 },
-    { field: "입력 약품명", headerName: "Input Name", flex: 1, editable: true },
-    { field: "입력 수량", headerName: "Quantity", flex: 0.3, editable: true }, // FIX: left alignment
-    { field: "매핑 약품명", headerName: "Mapped Name", flex: 1, editable: true },
-    { field: "표준코드", headerName: "Standard Code", flex: 0.5, editable: true },
-    { field: "제조사", headerName: "Manufacturer", flex: 0.5, editable: true },
-    { field: "약품 이미지", headerName: "Image", flex: 0.5,
+    { field: "id", headerName: "ID", flex: 0.2, align: "left", headerAlign: "left" },
+    { field: "입력 약품명", headerName: "Input Name", flex: 0.7, editable: true, align: "left", headerAlign: "left" },
+    { field: "매핑 약품명", headerName: "Mapped Name", flex: 0.7, editable: true, align: "left",headerAlign: "left" },
+    { field: "표준코드", headerName: "Standard Code", flex: 0.4, editable: true, align: "left", headerAlign: "left" },
+    { field: "제조사", headerName: "Manufacturer", flex: 0.4, editable: true, align: "left", headerAlign: "left" },
+    { field: "약품 이미지", headerName: "Image", flex: 0.3, align: "center", headerAlign: "left",
       renderCell: (params) =>
         params.value ? (
           <img
@@ -86,9 +111,12 @@ const Upload = () => {
             style={{ cursor: "pointer" }}
           />) : ( "N/A"),
     },
+    { field: "입력 수량", headerName: "Quantity", flex: 0.3, editable: true, align: "right", headerAlign: "right" },
     { field: "유사도 점수", 
       headerName: "Score", 
       flex: 0.3,
+      align: "right",
+      headerAlign: "right",
       renderCell: (params) => {
         const value = params.value;
         const rounded = typeof value === "number" ? value.toFixed(0) : value; // round-up value
@@ -98,6 +126,8 @@ const Upload = () => {
     { field: "액션", 
       headerName: "Actions", 
       flex: 0.4,
+      align: "right",
+      headerAlign: "center",
       renderCell: (params) => {
         return (
           <Box
@@ -135,18 +165,35 @@ const Upload = () => {
     }
   ];
 
-  // 파일 업로드 및 매핑 요청 처리
-  // update: 텍스트 매핑 말고 다른 방법 찾아보기!
+  // 파일 업로드 박스
+  const VisuallyHiddenInput = styled("input")({
+    clip: "rect(0 0 0 0)",
+    clipPath: "inset(50%)",
+    height: 1,
+    overflow: "hidden",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    whiteSpace: "nowrap",
+    width: 1,
+  });
+
+
+  // update: 매핑방식 변경
+  // 업로드 파일 매핑 처리 
   const handleUpload = async () => {
     if (!file) return alert("파일을 선택해주세요.");
+    
     const formData = new FormData();
     formData.append("file", file);
+    
     try {
       setLoading(true);
       const res = await fetch("http://localhost:8000/match-json", {
         method: "POST",
         body: formData,
       });
+      
       const data = await res.json();
       // 각 행에 고유id 부여 및 매핑 데이터 업데이트
       const formatted = data.map((item, idx) => ({ id: idx + 1, ...item }));
@@ -155,7 +202,7 @@ const Upload = () => {
     } catch (e) {
       console.error("매핑 실패", e);
     } finally {
-      setLoading(false); // 로딩 스피너 종료
+      setLoading(false)
     }
   };
 
@@ -241,7 +288,7 @@ const Upload = () => {
       await res.json();
 
       //showSnackbar(`최종 승인 완료: ${result.updated}건`, "success");
-      setPostApprovalMessage(`✅ 최종 승인이 완료되었습니다! <br/> 📄 목록 페이지로 이동합니다다...`);
+      setPostApprovalMessage(`✅ 최종 승인이 완료되었습니다! <br/> 📄 목록 페이지로 이동합니다...`);
       // List 페이지 이동
       setTimeout(() => {
         navigate("/drugs");
@@ -255,13 +302,15 @@ const Upload = () => {
     }
   };
 
-  // 다운로드 처리
+  // update: 추후 서버에서 다운로드 처리하게 디벨롭
   const handleDownload = () => {
-    const ws = utils.json_to_sheet(rows); // 테이블 데이터 -> 엑셀 워크시트 변환환
+    const ws = utils.json_to_sheet(rows); // 테이블 데이터 -> 엑셀 워크시트 변환
     const wb = utils.book_new(); // 엑셀 워크북
     utils.book_append_sheet(wb, ws, "Mapping Result");
-    writeFile(wb, "mapping_result.xlsx");
+    writeFile(wb, "parse_pdf_text_to_rows.xlsx");
   };
+
+  
 
   // 승인 Dialog 내 수정된 항목 강조 스타일
   const getBoxStyle = (item) => {
@@ -274,6 +323,66 @@ const Upload = () => {
       borderRadius: 2,
     };
   };
+
+  // todo: Generate and download drug mapping results as a formatted PDF file
+  // PDF 다운로드
+  const handlePdfDownload = () => {
+    const doc = new jsPDF({
+      orientation: "landscape", // 가로방향 설정
+      unit: "mm",
+      format: "a4"
+    });
+    doc.setFont("NotoSansKR");
+    
+    doc.setFontSize(16);
+    doc.text("Drug Mapping Result", 14, 20);
+
+    const headers = [["ID", "입력 약품명", "매핑 약품명", "표준코드", "제조사", "수량", "유사도", "매핑"]];
+    const data = rows.map((row) => [
+      row.id,
+      row["입력 약품명"] || "",
+      row["매핑 약품명"] || "",
+      row["표준코드"] || "",
+      row["제조사"] || "",
+      row["입력 수량"] || "",
+      row["유사도 점수"] || "",
+      row["매핑 여부"] || "",
+    ]);
+
+    // pdf 테이블 설정
+    autoTable(doc, {
+      startY: 30,
+      head: headers,
+      body: data,
+      styles: {
+        font: "NotoSansKR", 
+        fontSize: 9,
+        cellPadding: 2,
+        overflow: "linebreak", // 긴 텍스트 줄바꿈
+      },
+      headStyles: {
+        font: "NotoSansKR",       
+        fontStyle: "normal",      
+        fontSize: 10,             
+        fillColor: [22, 160, 133], 
+        textColor: [255, 255, 255], 
+      },
+      columnStyles: {
+        0: { cellWidth: 10 },   // ID
+        1: { cellWidth: 65 },   // 입력 약품명
+        2: { cellWidth: 65 },   // 매핑 약품명
+        3: { cellWidth: 30 },   // 표준코드
+        4: { cellWidth: 40 },   // 제조사
+        5: { cellWidth: 20 },   // 수량
+        6: { cellWidth: 20 },   // 유사도 점수
+        7: { cellWidth: 15 },   // 매핑여부
+      },
+      tableWidth: "wrap",
+    });
+
+    doc.save("mapping_result.pdf");
+  };
+
 
   // 필드별 수정정 여부 확인
   const isFieldEdited = (item, field) => {
@@ -307,76 +416,160 @@ const Upload = () => {
       row["입력 약품명"].toLowerCase().includes(searchText.toLowerCase())
   );
 
-  // 렌더링 파트
   return (
     <Container maxWidth="xlg" sx={{ mt: 4 }}>
-    {/* 최종 승인 메시지 최상단 위치*/}
+    {/* 최종 승인 메시지 (최상단 배치) */}
     {postApprovalMessage && (
       <Alert severity="success" sx={{ mb: 2, fontWeight: "bold" }}>
         {postApprovalMessage}
       </Alert>
     )}
-    
-      <Typography variant="h5" gutterBottom>
-        Upload your pharmacy’s drug list (Excel/PDF) and match with system database.
+      <Typography variant="h2" fontWeight="bold" gutterBottom>
+        Import Data
+      </Typography>
+      <Typography variant="h5" color="text.secondary" mb={3}>
+        Connect your pharmacy’s order list with EXION’s up-to-date drug database.
       </Typography>
 
-      {/* 파일 업로드 및 매핑 / 다운로드 */}
-      <Box
-        sx={{
-          border: "1px dashed #ccc",
-          borderRadius: "8px",
-          p: 2,
-          mb: 2,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-          backgroundColor: "#fafafa",
-        }}
-      >
-        <input
-          type="file"
-          onChange={(e) => setFile(e.target.files[0])}
-          style={{ flex: 1 }}
-        />
-        <Button onClick={handleUpload} disabled={loading} variant="contained">
-          업로드 및 매핑
-        </Button>
-        <Button onClick={handleDownload} disabled={loading} variant="outlined">
-          다운로드
-        </Button>
-      </Box>
+      
+      {/* 파일 업로드 박스 */}
+      {rows.length === 0 && 
+        <Box
+          sx={{
+            backgroundColor: "#f8f9fa",
+            borderRadius: 3,
+            p: 5,
+            boxShadow: 3,
+            textAlign: "center",
+            maxWidth: 880,
+            mx: "auto",
+            mt: 7,
+          }}
+        >
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Upload Your Drug List
+          </Typography>
+          <Typography variant="h6" color="text.secondary" mb={4}>
+          ✔️ Select an Excel or PDF file to match with our latest drug data.
+          </Typography>
 
-      {loading && (
-        <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-          <CircularProgress size={24} />
-          <Typography>매핑 중입니다...</Typography>
-        </Stack>
-      )}
+          {/* 파일선택 & 업로드 버튼 */}
+          <Stack direction="row" spacing={2} justifyContent="center">
+            <Button
+              component="label"
+              variant="contained"
+              sx={{
+                px: 2,
+                py: 1.5,
+                fontWeight: "bold",
+                fontSize: "1rem",
+                borderRadius: 2,
+                backgroundColor: file ? "#e3f2fd" : "#1976d2",
+                color: file ? "#1976d2" : "#fff",
+                border: file ? "1px solid #90caf9" : "none",
+                "&:hover": {
+                  backgroundColor: file ? "#bbdefb" : "#1565c0",
+                },
+              }}
+              endIcon={<CloudUploadIcon />}
+            >
+              Choose File
+              <VisuallyHiddenInput
+                type="file"
+                accept=".xlsx,.xls,.pdf"
+                onChange={(e) => setFile(e.target.files[0])}
+              />
+            </Button>
 
-      {/* 로딩 완료 후 */}
+            {file && (
+              <Button
+                variant="contained"
+                onClick={handleUpload}
+                disabled={loading && !file}
+                sx={{
+                  backgroundColor: "#1976d2",
+                  "&:hover": { backgroundColor: "#1565c0" },
+                  fontWeight: "bold",
+                  px: 2,
+                  py: 1.5,
+                  fontSize: "0.8rem",
+                  borderRadius: 2,
+                }}
+              >
+                {loading ? (
+                  <>
+                    <CircularProgress size={18} sx={{ color: "#fff", mr: 1 }} />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload"
+                )}
+              </Button>
+            )}
+          </Stack>
+
+          {/* 선택한 파일 표시 */}
+          {file && (
+            <>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                mt={2}
+                mb={2}
+              >
+                Selected file:{" "}
+                <Box component="span" sx={{ fontWeight: 600, color: "#1e88e5" }}>
+                  {file.name}
+                </Box>
+              </Typography>
+            </>
+          )}
+        </Box>
+      }
+
+      {/* 왼쪽 상단 */}
       {!loading && rows.length > 0 && (
-        <Stack direction="row" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction="row" alignItems="center" sx={{ mb: 2, gap: 1}}>
+          {/* 검색창 */}
           <TextField
-            label="약품명 검색"
+            label="Search by Drug Name"
             variant="outlined"
             size="small"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
-            sx={{ width: 200 }}
+            sx={{ width: 300 }}
           />
           {/* 필터링 버튼 */}
           <Button variant={filter === "all" ? "contained" : "outlined"} onClick={() => setFilter("all")}>
-            전체
+            All
           </Button>
           <Button variant={filter === "success" ? "contained" : "outlined"} onClick={() => setFilter("success")}>
-            성공
+            Matched
           </Button>
           <Button variant={filter === "fail" ? "contained" : "outlined"} onClick={() => setFilter("fail")}>
-            실패
+            Unmatched
           </Button>
-          {/* 최종승인 버튼 */}
-          <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-end", mt: 2 }}>
+
+          {/* 우측 상단 */}
+          <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
+            {/* New Import */}
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                setRows([]);
+                setFile(null);
+                setOriginalRows([]);
+              }}
+              sx={{
+                minWidth: 40, 
+                px: 1.5,  
+                height: 40, 
+              }}
+            >
+              <UploadFileIcon />
+            </Button>
+            {/* 최종승인 */}
             <Button
               variant="contained"
               color="secondary"
@@ -386,8 +579,9 @@ const Upload = () => {
                 setPreviewData(preview);
                 setConfirmOpen(true);
               }}
+              sx={{ fontWeight: "bold", fontSize: "0.9rem"}}
             >
-              최종승인
+            Confirm
             </Button>
           </Box>
         </Stack>
@@ -402,6 +596,8 @@ const Upload = () => {
             processRowUpdate={handleRowUpdate} // 수정 시 상태 갱신
             onProcessRowUpdateError={(error) => console.error(error)}
             experimentalFeatures={{ newEditingApi: true }}
+            pageSizeOptions={[25, 50, 100]}
+            paginationModel={{ pageSize: 25, page: 0 }} 
             disableRowSelectionOnClick
             getRowClassName={(params) => {
               if (editBuffer[params.id]) return 'edited-row';
@@ -426,10 +622,10 @@ const Upload = () => {
         </Box>
       )}
 
-      {/* 이미지 미리보기 Dialog */}
+      {/* 이미지 확대 */}
       <Dialog open={openImage} onClose={() => setOpenImage(false)} maxWidth="md">
-        <DialogTitle>
-          약품 이미지
+        <DialogTitle sx={{ fontSize: "1.4rem", fontWeight: "bold"}}>
+          Image
           <IconButton
             onClick={() => setOpenImage(false)}
             sx={{ position: "absolute", right: 8, top: 8 }}
@@ -450,7 +646,7 @@ const Upload = () => {
 
       {/* 최종 승인 Dialog */}
       <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>최종 승인</DialogTitle>
+        <DialogTitle>Final Approval</DialogTitle>
         <DialogContent dividers>
         {/* 메시지 박스 추가 위치 */}
         {postApprovalMessage && (
@@ -475,28 +671,29 @@ const Upload = () => {
           </Alert>
         )}
           {/* 요약 메세지 */}
-          <Typography gutterBottom>
-            전체 <strong>{rows.length}</strong>건 중{" "}
-            <strong style={{ color: "#d32f2f" }}>{previewData.length}</strong>건이 수정되었습니다.
+          <Typography gutterBottom sx={{ fontSize: "1rem" }}>
+            <strong>{rows.length}</strong> records in total, with{" "}
+            <strong style={{ color: "#d32f2f" }}>{previewData.length}</strong> modified.
           </Typography>
-          <Typography>
+          <Typography sx={{ fontSize: "1rem" }}>
             {previewData.length > 0 ? (
               <>
-                수정된 <strong>{previewData.length}</strong>건을 포함한 전체 약품 데이터 <strong>{rows.length}</strong>건을 최종 승인하시겠습니까?
+                Do you want to finalize all <strong>{rows.length}</strong> drug records,
+                including <strong>{previewData.length}</strong> modified items?
               </>
             ) : (
               <>
-                전체 <strong>{rows.length}</strong>건의 약품 데이터를 최종 승인하시겠습니까?
+                Do you want to finalize all <strong>{rows.length}</strong> drug records?
               </>
             )}
           </Typography>
-          <Typography sx={{ mt: 1, fontSize: "0.875rem", color: "gray", mb: 2 }}>
-            ※ 최종 승인 시 모든 데이터가 서버에 저장됩니다.
+          <Typography sx={{ mt: 1, fontSize: "0.875rem", color: "gray", mb: 2}}>
+            ※ All data will be saved to the server upon final approval.
           </Typography>
           {/* 승인 메모 입력 */}
           <TextField
             fullWidth
-            label="승인 메모 (선택)"
+            label="Apporval Note (optional)"
             variant="outlined"
             size="small"
             value={approvalNote}
@@ -509,13 +706,13 @@ const Upload = () => {
               variant={showAllRowsInDialog ? "contained" : "outlined"}
               onClick={() => setShowAllRowsInDialog(true)}
             >
-              전체내역
+              All
             </Button>
             <Button
               variant={!showAllRowsInDialog ? "contained" : "outlined"}
               onClick={() => setShowAllRowsInDialog(false)}
             >
-              수정내역
+              Modified
             </Button>
           </Stack>
 
@@ -565,12 +762,12 @@ const Upload = () => {
             ))}
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" sx={{ p: 2 }}>
-          <Button onClick={() => setConfirmOpen(false)}>취소</Button>
+          <Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
           <Button
             variant="contained"
             onClick={handleApproval}
           >
-            승인 확정
+            Save
           </Button>
         </Stack>
       </Dialog>
