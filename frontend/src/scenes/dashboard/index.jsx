@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 
 //! 회사 API 변경 후 사용: http://192.168.1.89:8000
 // 외부 접속 허용 API
-const API_KEY = 'http://172.30.1.66:8000';
+const API_KEY = 'http://192.168.1.89:8000';
 const WS_URL = `${API_KEY.replace(/^http/, 'ws')}`;
 
 const GlassCard = styled(Paper)(({ theme }) => ({

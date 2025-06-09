@@ -22,7 +22,6 @@ class Inventory(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     drug_id = Column(Integer, ForeignKey("drug.id"), nullable=False)
-
     quantity = Column(Integer, default=0)
     unit = Column(String(20), default='ea')
     expiration_date = Column(Date, nullable=True)

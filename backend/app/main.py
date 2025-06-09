@@ -2,9 +2,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import Base, engine
-from app.routers import drug
-from app.routers import inventory
-from app.routers import upload
+from app.routers import drug, inventory, upload
+from app.routers import barcode
 from app.websocket_manager import connect, disconnect
 from app.watchdog_runner import start_watchdog
 import asyncio
@@ -53,6 +52,7 @@ app.include_router(inventory.router)
 app.include_router(drug.router)
 app.include_router(upload.router)
 app.include_router(reports.router)
+app.include_router(barcode.router, prefix="/api/barcode")
 
 # 정적 파일 라우트 추가
 app.mount("/images", StaticFiles(directory=IMAGE_DIR), name="images")

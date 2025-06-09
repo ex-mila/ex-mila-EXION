@@ -22,15 +22,29 @@ import '../../index.css';
 
 //! 회사 API 변경 후 사용: http://192.168.1.89:8000
 // 외부 접속 허용 API
-const API_KEY = 'http://172.30.1.66:8000';
+const API_KEY = 'http://172.30.1.13:8000';
 const WS_URL = `${API_KEY.replace(/^http/, 'ws')}`;
+
+const extractDateTime = (timestamp) => {
+  const date = `${timestamp.slice(0, 4)}-${timestamp.slice(4, 6)}-${timestamp.slice(6, 8)}`;
+  const time = `${timestamp.slice(9, 11)}:${timestamp.slice(11, 13)}:${timestamp.slice(13)}`;
+  return [date, time];
+};
+
+const formatTime = (timeStr) => {
+  const [hh, mm] = timeStr.split(':');
+  const hour = parseInt(hh);
+  const suffix = hour >= 12 ? 'PM' : 'AM';
+  const hour12 = (((hour + 11) % 12) + 1).toString().padStart(2, '0');
+  return `${hour12}:${mm} ${suffix}`;
+};
 
 const Reports = () => {
   const [logs, setLogs] = useState([]);
   const [search, setSearch] = useState('');
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [isConnecting, setIsConnecting] = useState(true); // 최초 로딩
+  const [isConnecting, setIsConnecting] = useState(true);
   const [fetchError, setFetchError] = useState(false);
   const [drugInfo, setDrugInfo] = useState(null);
   const [showCard, setShowCard] = useState(false);
@@ -40,15 +54,6 @@ const Reports = () => {
   const wsRef = useRef(null);
   const colors = tokens('light');
 
-  // Timestamp 분리 (time/date)
-  const formatTime = (timeStr) => {
-    const [hh, mm, ss] = timeStr.split(':');
-    const hour = parseInt(hh);
-    const suffix = hour >= 12 ? 'PM' : 'AM';
-    const hour12 = (((hour + 11) % 12) + 1).toString().padStart(2, '0');
-    return `${hour12}:${mm} ${suffix}`;
-  };
-
   const fetchLogs = () => {
     fetch(`${API_KEY}/api/reports`)
       .then((res) => {
@@ -57,22 +62,11 @@ const Reports = () => {
       })
       .then((data) => {
         const formatted = data.map((item) => {
-          const [date, time] = item.timestamp
-            .split('-')
-            .reduce(
-              (acc, val, i) => {
-                if (i < 3) acc[0].push(val);
-                else acc[1].push(val);
-                return acc;
-              },
-              [[], []]
-            )
-            .map((part, i) => (i === 1 ? part.join(':') : part.join('-')));
-
+          const [date, timeRaw] = extractDateTime(item.timestamp);
           return {
             ...item,
             date,
-            time: formatTime(time),
+            time: formatTime(timeRaw),
             isNew: false,
             id: item.id,
           };
@@ -113,20 +107,9 @@ const Reports = () => {
       setDrugInfo(raw);
       setShowCard(true);
 
-      const [date, timeRaw] = raw.timestamp
-        .split('-')
-        .reduce(
-          (acc, val, i) => {
-            if (i < 3) acc[0].push(val);
-            else acc[1].push(val);
-            return acc;
-          },
-          [[], []]
-        )
-        .map((part, i) => (i === 1 ? part.join(':') : part.join('-')));
-
+      const [date, timeRaw] = extractDateTime(raw.timestamp);
       const formattedTime = formatTime(timeRaw);
-      const newRowId = raw.id ?? `${raw.timestamp}-${raw.drug_standard_code}`;
+      const newRowId = raw.id;
 
       setLogs((prev) => {
         const cleaned = prev.map((log) => ({ ...log, isNew: false }));
@@ -145,7 +128,7 @@ const Reports = () => {
           prev.map((log) => (log.id === newRowId ? { ...log, isNew: false } : log))
         );
         setShowCard(false);
-      }, 5000);
+      }, 9000);
     };
   };
 
@@ -155,7 +138,6 @@ const Reports = () => {
   }, []);
 
   useEffect(() => {
-    connectWebSocket();
     const interval = setInterval(() => {
       if (!wsRef.current || wsRef.current.readyState > 1) {
         connectWebSocket();
@@ -165,7 +147,7 @@ const Reports = () => {
   }, []);
 
   const filteredLogs = logs.filter((log) =>
-    log.drug_name.toLowerCase().includes(search.toLowerCase())
+    log.drug_name?.toLowerCase().includes(search.toLowerCase())
   );
 
   const handleExcelDownload = () => {
@@ -175,7 +157,6 @@ const Reports = () => {
     XLSX.writeFile(workbook, 'counting_logs.xlsx');
   };
 
-  // update: 컬럼 순서 변경
   const columns = [
     { field: 'id', headerName: 'ID', flex: 0.3 },
     { field: 'date', headerName: 'Date', flex: 0.5 },
@@ -286,7 +267,7 @@ const Reports = () => {
                     [
                       'Snapshot',
                       <img
-                        src={`${API_KEY}/images/${drugInfo.timestamp}_${drugInfo.drug_standard_code}_${drugInfo.count_quantity}.png`}
+                        src={`${API_KEY}/images/${drugInfo.timestamp}.png`}
                         alt="drug"
                         style={{ maxWidth: '100%', borderRadius: 8 }}
                         onError={(e) => (e.target.style.display = 'none')}
@@ -378,7 +359,7 @@ const Reports = () => {
             }}
           >
             <img
-              src={`${API_KEY}/images/${selectedRow.timestamp}_${selectedRow.drug_standard_code}_${selectedRow.count_quantity}.png`}
+              src={`${API_KEY}/images/${selectedRow.timestamp}.png`}
               alt="drug"
               style={{
                 width: '100%',

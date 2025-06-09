@@ -1,24 +1,10 @@
 # models.py의 모델을 바탕으로 API 응답용 Pydantic 모델 정의
 from pydantic import BaseModel, Field
 from datetime import date
-from typing import Optional, Union
-
-# 약품 정보를 외부로 출력할 때 사용하는 모델
-class DrugOut(BaseModel):
-    id: int
-    drug_name: str
-    standard_code: str
-    product_code: str
-    manufacturer: Optional[str]
-    image_url: Optional[str]
-
-    class Config:
-        orm_mode  = True
+from typing import Optional, Union, List
 
 class InventoryOut(BaseModel):
     id: int
-    drug_name: int
-    standard_code: str
     quantity: int
     unit: str
     expiration_date: Optional[date]
@@ -26,10 +12,50 @@ class InventoryOut(BaseModel):
     cabinet: Optional[str]
     row: Optional[int]
     position: Optional[int]
-    drug: Optional[DrugOut]  # 조인된 Drug 정보 포함
 
     class Config:
         orm_mode = True
+
+class DrugOut(BaseModel):
+    id: int
+    standard_code: str
+    name: str
+    manufacturer: Optional[str]
+    image_url: Optional[str]
+    inventory_items: List[InventoryOut] = []
+
+    class Config:
+        orm_mode = True
+
+
+
+# 약품 정보를 외부로 출력할 때 사용하는 모델
+# class DrugOut(BaseModel):
+#     id: int
+#     drug_name: str
+#     standard_code: str
+#     product_code: str
+#     manufacturer: Optional[str]
+#     image_url: Optional[str]
+
+#     class Config:
+#         orm_mode  = True
+
+# class InventoryOut(BaseModel):
+#     id: int
+#     drug_name: int
+#     standard_code: str
+#     quantity: int
+#     unit: str
+#     expiration_date: Optional[date]
+#     status: str
+#     cabinet: Optional[str]
+#     row: Optional[int]
+#     position: Optional[int]
+#     drug: Optional[DrugOut]  # 조인된 Drug 정보 포함
+
+#     class Config:
+#         orm_mode = True
 
 # class InventoryOut(BaseModel):
 #     id: int

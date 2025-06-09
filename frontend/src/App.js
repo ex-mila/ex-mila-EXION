@@ -7,6 +7,8 @@ import Invoices from './scenes/invoices';
 import Inventory from './scenes/inventory';
 import Upload from './scenes/upload';
 import Reports from './scenes/reports';
+import Barcode from './scenes/barcode';
+
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { ColorModeContext, useMode } from './theme';
 import Drug from './scenes/drug';
@@ -30,6 +32,7 @@ function App() {
               <Route path="/inventory" element={<Inventory />} />
               <Route path="/upload" element={<Upload />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/barcodes" element={<Barcode />} />
             </Routes>
           </main>
         </div>
